@@ -49,9 +49,9 @@ public class Song {
     public Song() {
     }
 
-    public Song(String title, Lp lp) {
+    public Song(String title) {
         this.title = title;
-        this.lp = lp;
+
     }
 
     // Getter y Setters

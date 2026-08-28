@@ -43,10 +43,9 @@ public class Lp {
     public Lp() {
     }
 
-    public Lp(String name, String description, Artist artist) {
+    public Lp(String name, String description) {
         this.name = name;
         this.description = description;
-        this.artist = artist;
     }
 
     // Getter y Setters
@@ -87,6 +86,18 @@ public class Lp {
         this.songs = songs;
     }
 
+
+    // Métodos de conveniencia para relación bidireccional
+
+    public void addSong(Song song) {
+        this.songs.add(song);
+        song.setLp(this);
+    }
+
+    public void removeSong(Song song) {
+        this.songs.remove(song);
+        song.setLp(null);
+    }
     // Equals y HashCode
 
     @Override

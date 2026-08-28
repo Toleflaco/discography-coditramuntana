@@ -1,5 +1,6 @@
 package com.coditramuntana.discography.domain.artist;
 
+import com.coditramuntana.discography.domain.author.Author;
 import com.coditramuntana.discography.domain.lp.Lp;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -68,6 +69,16 @@ public class Artist {
 
     public void setLps(List<Lp> lps) {
         this.lps = lps;
+    }
+
+    // Métodos de conveniencia para relación bidireccional
+    public void addLp(Lp lp) {
+        this.lps.add(lp);
+        lp.setArtist(this);
+    }
+    public void removeLp(Lp lp) {
+        this.lps.remove(lp);
+        lp.setArtist(null);
     }
 
     // Equals y HashCode
