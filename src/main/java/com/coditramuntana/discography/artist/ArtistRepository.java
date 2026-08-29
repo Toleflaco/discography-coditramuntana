@@ -1,4 +1,4 @@
-package com.coditramuntana.discography.domain.artist;
+package com.coditramuntana.discography.artist;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

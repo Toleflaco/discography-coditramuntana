@@ -1,11 +1,11 @@
 package com.coditramuntana.discography.seed;
 
-import com.coditramuntana.discography.domain.artist.Artist;
-import com.coditramuntana.discography.domain.artist.ArtistRepository;
-import com.coditramuntana.discography.domain.author.Author;
-import com.coditramuntana.discography.domain.author.AuthorRepository;
-import com.coditramuntana.discography.domain.lp.Lp;
-import com.coditramuntana.discography.domain.song.Song;
+import com.coditramuntana.discography.artist.Artist;
+import com.coditramuntana.discography.artist.ArtistRepository;
+import com.coditramuntana.discography.author.Author;
+import com.coditramuntana.discography.author.AuthorRepository;
+import com.coditramuntana.discography.lp.Lp;
+import com.coditramuntana.discography.song.Song;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

@@ -1,6 +1,6 @@
-package com.coditramuntana.discography.domain.author;
+package com.coditramuntana.discography.author;
 
-import com.coditramuntana.discography.domain.song.Song;
+import com.coditramuntana.discography.song.Song;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
