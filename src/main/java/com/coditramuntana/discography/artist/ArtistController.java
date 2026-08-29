@@ -1,10 +1,24 @@
 package com.coditramuntana.discography.artist;
 
+import com.coditramuntana.discography.artist.dto.ArtistCreateRequest;
+import com.coditramuntana.discography.artist.dto.ArtistDetailResponse;
 import com.coditramuntana.discography.artist.dto.ArtistResponse;
+import com.coditramuntana.discography.artist.dto.ArtistUpdateRequest;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/artists")
@@ -16,9 +30,40 @@ public class ArtistController {
         this.artistService = artistService;
     }
 
+    @GetMapping
+    public Page<ArtistResponse> findAll(Pageable pageable) {
+        return artistService.findAll(pageable)
+                .map(ArtistResponse::from);
+    }
+
     @GetMapping("/{id}")
-    public ArtistResponse findById(@PathVariable Long id) {
-        Artist artist = artistService.findById(id);
-        return ArtistResponse.from(artist);
+    public ArtistDetailResponse findById(@PathVariable Long id) {
+        return artistService.findDetailById(id);
+    }
+
+    @PostMapping
+    public ResponseEntity<ArtistResponse> create(@Valid @RequestBody ArtistCreateRequest request) {
+        Artist created = artistService.create(request);
+        ArtistResponse response = ArtistResponse.from(created);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ArtistResponse update(@PathVariable Long id, @Valid @RequestBody ArtistUpdateRequest request) {
+        Artist updated = artistService.update(id, request);
+        return ArtistResponse.from(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        artistService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

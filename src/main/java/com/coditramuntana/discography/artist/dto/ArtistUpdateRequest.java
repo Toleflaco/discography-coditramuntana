@@ -1,0 +1,17 @@
+package com.coditramuntana.discography.artist.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record ArtistUpdateRequest(
+
+        @NotBlank
+        @Size(min = 1, max = 100)
+        String name,
+
+        @NotBlank
+        @Size(max = 5000)
+        String description
+
+) {
+}

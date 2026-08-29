@@ -1,4 +1,4 @@
-package com.coditramuntana.discography.artist;
+package com.coditramuntana.discography.artist.exception;
 
 import com.coditramuntana.discography.shared.error.ResourceNotFoundException;
 
