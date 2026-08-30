@@ -42,5 +42,18 @@ public interface LpRepository extends JpaRepository<Lp, Long> {
             WHERE l.id = :id
             """)
     Optional<Lp> findByIdWithArtist(@Param("id") Long id);
+
     Optional<Lp> findByArtistIdAndName(Long artistId, String name);
+
+    @Query(
+            value = """
+                    SELECT l FROM Lp l
+                    JOIN FETCH l.artist
+                    
+                    """,
+            countQuery = """
+                    SELECT COUNT(l) FROM Lp l
+                    """
+    )
+    Page<Lp> findAllForReport(Pageable pageable);
 }
