@@ -32,8 +32,8 @@ public class ArtistController {
 
     @GetMapping
     public Page<ArtistResponse> findAll(Pageable pageable) {
-        return artistService.findAll(pageable)
-                .map(ArtistResponse::from);
+        return artistService.findAll(pageable);
+
     }
 
     @GetMapping("/{id}")
@@ -43,22 +43,21 @@ public class ArtistController {
 
     @PostMapping
     public ResponseEntity<ArtistResponse> create(@Valid @RequestBody ArtistCreateRequest request) {
-        Artist created = artistService.create(request);
-        ArtistResponse response = ArtistResponse.from(created);
+        ArtistResponse created = artistService.create(request);
+
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(created.getId())
+                .buildAndExpand(created.id())
                 .toUri();
 
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{id}")
     public ArtistResponse update(@PathVariable Long id, @Valid @RequestBody ArtistUpdateRequest request) {
-        Artist updated = artistService.update(id, request);
-        return ArtistResponse.from(updated);
+        return artistService.update(id, request);
     }
 
     @DeleteMapping("/{id}")

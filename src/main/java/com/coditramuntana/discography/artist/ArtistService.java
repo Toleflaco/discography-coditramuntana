@@ -2,6 +2,7 @@ package com.coditramuntana.discography.artist;
 
 import com.coditramuntana.discography.artist.dto.ArtistCreateRequest;
 import com.coditramuntana.discography.artist.dto.ArtistDetailResponse;
+import com.coditramuntana.discography.artist.dto.ArtistResponse;
 import com.coditramuntana.discography.artist.dto.ArtistUpdateRequest;
 import com.coditramuntana.discography.artist.exception.ArtistHasLpsException;
 import com.coditramuntana.discography.artist.exception.ArtistNameAlreadyExistsException;
@@ -24,8 +25,8 @@ public class ArtistService {
         this.lpRepository = lpRepository;
     }
 
-    public Page<Artist> findAll(Pageable pageable) {
-        return artistRepository.findAll(pageable);
+    public Page<ArtistResponse> findAll(Pageable pageable) {
+        return artistRepository.findAll(pageable).map(ArtistResponse::from);
     }
 
     public Artist findById(Long id) {
@@ -40,18 +41,19 @@ public class ArtistService {
     }
 
     @Transactional
-    public Artist create(ArtistCreateRequest request) {
+    public ArtistResponse create(ArtistCreateRequest request) {
         if (artistRepository.findByName(request.name()).isPresent()) {
             throw new ArtistNameAlreadyExistsException(request.name());
         }
         Artist artist = new Artist();
         artist.setName(request.name());
         artist.setDescription(request.description());
-        return artistRepository.save(artist);
+        Artist saved = artistRepository.save(artist);
+        return ArtistResponse.from(saved);
     }
 
     @Transactional
-    public Artist update(Long id, ArtistUpdateRequest request) {
+    public ArtistResponse update(Long id, ArtistUpdateRequest request) {
         Artist artist = findById(id);
         if (!artist.getName().equals(request.name())
                 && artistRepository.findByName(request.name()).isPresent()) {
@@ -59,7 +61,8 @@ public class ArtistService {
         }
         artist.setName(request.name());
         artist.setDescription(request.description());
-        return artistRepository.save(artist);
+        Artist saved = artistRepository.save(artist);
+        return ArtistResponse.from(saved);
     }
 
     @Transactional
