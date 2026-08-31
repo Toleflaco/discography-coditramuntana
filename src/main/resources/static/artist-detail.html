@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de artista · Discography</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header>
+    <nav>
+        <ul><li><a href="/">← Inicio</a></li></ul>
+        <ul>
+            <li><a href="/artists.html">Artistas</a></li>
+            <li><a href="/lps.html">LPs</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section id="artist-info">
+        <h1 id="artist-name">Cargando…</h1>
+        <p id="artist-description"></p>
+        <p><strong>LPs:</strong> <span id="artist-lp-count">—</span></p>
+    </section>
+
+    <section>
+        <h2>Discografía</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+            </tr>
+            </thead>
+            <tbody id="lps-tbody"></tbody>
+        </table>
+    </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/artist-detail.js"></script>
+</body>
+</html>

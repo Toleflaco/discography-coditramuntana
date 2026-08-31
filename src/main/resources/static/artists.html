@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artistas · Discography</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header>
+    <nav>
+        <ul><li><a href="/">← Inicio</a></li></ul>
+        <ul>
+            <li><a href="/lps.html">LPs</a></li>
+            <li><a href="/report.html">Reporte</a></li>
+        </ul>
+    </nav>
+    <h1>Artistas</h1>
+</header>
+
+<main>
+    <!-- Formulario create/update -->
+    <section>
+        <h2 id="form-title">Nuevo artista</h2>
+        <form id="artist-form">
+            <input type="hidden" id="artist-id">
+            <label>
+                Nombre
+                <input type="text" id="artist-name" name="name" required minlength="1" maxlength="100">
+                <small class="field-error" data-field="name"></small>
+            </label>
+            <label>
+                Descripción
+                <textarea id="artist-description" name="description" required minlength="1" maxlength="5000" rows="3"></textarea>
+                <small class="field-error" data-field="description"></small>
+            </label>
+            <div>
+                <button type="submit" id="submit-btn">Crear</button>
+                <button type="button" id="cancel-btn" hidden>Cancelar</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabla + paginación -->
+    <section>
+        <h2>Listado</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>LPs</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="artists-tbody"></tbody>
+        </table>
+        <nav id="pagination">
+            <button id="prev-btn">← Anterior</button>
+            <span id="page-info"></span>
+            <button id="next-btn">Siguiente →</button>
+        </nav>
+    </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/artists.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de discografía · Discography</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header>
+    <nav>
+        <ul><li><a href="/">← Inicio</a></li></ul>
+        <ul>
+            <li><a href="/artists.html">Artistas</a></li>
+            <li><a href="/lps.html">LPs</a></li>
+        </ul>
+    </nav>
+    <h1>Reporte de discografía</h1>
+    <p>Listado de LPs con número de canciones y autores implicados.</p>
+</header>
+
+<main>
+    <section>
+        <table>
+            <thead>
+            <tr>
+                <th>LP</th>
+                <th>Artista</th>
+                <th>Nº canciones</th>
+                <th>Autores</th>
+            </tr>
+            </thead>
+            <tbody id="report-tbody"></tbody>
+        </table>
+        <nav id="pagination">
+            <button id="prev-btn">← Anterior</button>
+            <span id="page-info"></span>
+            <button id="next-btn">Siguiente →</button>
+        </nav>
+    </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/report.js"></script>
+</body>
+</html>
