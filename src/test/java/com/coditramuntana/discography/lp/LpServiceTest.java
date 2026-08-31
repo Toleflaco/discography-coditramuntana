@@ -10,6 +10,7 @@ import com.coditramuntana.discography.lp.dto.LpUpdateRequest;
 import com.coditramuntana.discography.lp.exception.LpAlreadyExistsForArtistException;
 import com.coditramuntana.discography.lp.exception.LpNotFoundException;
 import com.coditramuntana.discography.song.SongRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 public class LpServiceTest {
@@ -46,13 +51,15 @@ public class LpServiceTest {
 
 
     @Nested
+    @DisplayName("findAll(String artistName, Pageable pageable)")
     class FindAll {
 
         @Test
+        @DisplayName("Aplica el sort por defecto cuando el pageable llega sin sort")
         void aplicaSortPorDefectoCuandoPageableLlegaSinSort() {
             // ---------- ARRANGE ----------
-            when(lpRepository.findAllWithArtist(any(Pageable.class)))
-                    .thenReturn(new PageImpl<>(List.of()));
+            given(lpRepository.findAllWithArtist(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of()));
 
             // Pageable SIN sort (el cliente no mandó ?sort=)
             Pageable pageableSinSort = PageRequest.of(0, 10);
@@ -62,7 +69,7 @@ public class LpServiceTest {
 
             // ---------- ASSERT ----------
             ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-            verify(lpRepository).findAllWithArtist(captor.capture());
+            then(lpRepository).should().findAllWithArtist(captor.capture());
 
             Sort sortAplicado = captor.getValue().getSort();
 
@@ -70,10 +77,11 @@ public class LpServiceTest {
         }
 
         @Test
+        @DisplayName("Respeta el sort del cliente cuando el pageable llega con sort")
         void respetaSortDelClienteCuandoPageableLlegaConSort() {
             // ---------- ARRANGE ----------
-            when(lpRepository.findAllWithArtist(any(Pageable.class)))
-                    .thenReturn(new PageImpl<>(List.of()));
+            given(lpRepository.findAllWithArtist(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of()));
 
             // Pageable CON sort explícito del cliente
             Sort sortDelCliente = Sort.by("name").descending();
@@ -84,7 +92,7 @@ public class LpServiceTest {
 
             // ---------- ASSERT ----------
             ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-            verify(lpRepository).findAllWithArtist(captor.capture());
+            then(lpRepository).should().findAllWithArtist(captor.capture());
 
             Sort sortAplicado = captor.getValue().getSort();
 
@@ -93,32 +101,35 @@ public class LpServiceTest {
     }
 
     @Nested
+    @DisplayName("findDetailById(Long id)")
     class FindDetailById {
 
         @Test
+        @DisplayName("Lanza LpNotFoundException cuando el id no existe")
         void lanzaLpNotFoundExceptionCuandoIdNoExiste() {
             // ---------- ARRANGE ----------
-            when(lpRepository.findByIdWithArtist(99L))
-                    .thenReturn(Optional.empty());
+            given(lpRepository.findByIdWithArtist(99L))
+                    .willReturn(Optional.empty());
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.findDetailById(99L))
                     .isInstanceOf(LpNotFoundException.class);
 
-            verifyNoInteractions(songRepository);
+            then(songRepository).shouldHaveNoInteractions();
         }
 
         @Test
+        @DisplayName("Devuelve el DTO con el conteo de canciones cuando el LP existe")
         void devuelveDtoConSongCountCuandoLpExiste() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
             Lp lp = new Lp("Test Lp", "description");
             lp.setArtist(artist);
 
-            when(lpRepository.findByIdWithArtist(1L))
-                    .thenReturn(Optional.of(lp));
-            when(songRepository.countByLpId(1L))
-                    .thenReturn(5L);
+            given(lpRepository.findByIdWithArtist(1L))
+                    .willReturn(Optional.of(lp));
+            given(songRepository.countByLpId(1L))
+                    .willReturn(5L);
 
             // ---------- ACT ----------
             LpDetailResponse response = lpService.findDetailById(1L);
@@ -130,60 +141,64 @@ public class LpServiceTest {
     }
 
     @Nested
+    @DisplayName("create(LpCreateRequest request)")
     class Create {
 
         @Test
+        @DisplayName("Lanza ArtistNotFoundException cuando el artistId no existe")
         void lanzaArtistNotFoundExceptionCuandoArtistIdNoExiste() {
             // ---------- ARRANGE ----------
             LpCreateRequest request = new LpCreateRequest("Test Lp", "description", 99L);
-            when(artistRepository.findById(99L))
-                    .thenReturn(Optional.empty());
+            given(artistRepository.findById(99L))
+                    .willReturn(Optional.empty());
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.create(request))
                     .isInstanceOf(ArtistNotFoundException.class);
 
-            verifyNoInteractions(lpRepository);
+            then(lpRepository).shouldHaveNoInteractions();
         }
 
         @Test
+        @DisplayName("Lanza LpAlreadyExistsForArtistException cuando el name ya existe para el artist")
         void lanzaLpAlreadyExistsForArtistExceptionCuandoNameYaExisteParaArtist() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
             Lp lpExistente = new Lp("Repetido", "otra description");
             LpCreateRequest request = new LpCreateRequest("Repetido", "description", 1L);
 
-            when(artistRepository.findById(1L))
-                    .thenReturn(Optional.of(artist));
-            when(lpRepository.findByArtistIdAndName(1L, "Repetido"))
-                    .thenReturn(Optional.of(lpExistente));
+            given(artistRepository.findById(1L))
+                    .willReturn(Optional.of(artist));
+            given(lpRepository.findByArtistIdAndName(1L, "Repetido"))
+                    .willReturn(Optional.of(lpExistente));
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.create(request))
                     .isInstanceOf(LpAlreadyExistsForArtistException.class);
 
-            verify(lpRepository, never()).save(any());
+            then(lpRepository).should(never()).save(any());
         }
 
         @Test
+        @DisplayName("Persiste con el artist asignado cuando no hay colisión")
         void persisteConArtistAsignadoCuandoNoHayColision() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
             LpCreateRequest request = new LpCreateRequest("Nuevo Lp", "description", 1L);
 
-            when(artistRepository.findById(1L))
-                    .thenReturn(Optional.of(artist));
-            when(lpRepository.findByArtistIdAndName(1L, "Nuevo Lp"))
-                    .thenReturn(Optional.empty());
-            when(lpRepository.save(any(Lp.class)))
-                    .thenAnswer(invocation -> invocation.getArgument(0));
+            given(artistRepository.findById(1L))
+                    .willReturn(Optional.of(artist));
+            given(lpRepository.findByArtistIdAndName(1L, "Nuevo Lp"))
+                    .willReturn(Optional.empty());
+            given(lpRepository.save(any(Lp.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             // ---------- ACT ----------
             LpResponse response = lpService.create(request);
 
             // ---------- ASSERT ----------
             ArgumentCaptor<Lp> captor = ArgumentCaptor.forClass(Lp.class);
-            verify(lpRepository).save(captor.capture());
+            then(lpRepository).should().save(captor.capture());
 
             assertThat(captor.getValue().getArtist()).isSameAs(artist);
             assertThat(response.name()).isEqualTo("Nuevo Lp");
@@ -191,23 +206,26 @@ public class LpServiceTest {
     }
 
     @Nested
+    @DisplayName("update(Long id, LpUpdateRequest request)")
     class Update {
 
         @Test
+        @DisplayName("Lanza LpNotFoundException cuando el id no existe")
         void lanzaLpNotFoundExceptionCuandoIdNoExiste() {
             // ---------- ARRANGE ----------
             LpUpdateRequest request = new LpUpdateRequest("Nuevo nombre", "description");
-            when(lpRepository.findByIdWithArtist(99L))
-                    .thenReturn(Optional.empty());
+            given(lpRepository.findByIdWithArtist(99L))
+                    .willReturn(Optional.empty());
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.update(99L, request))
                     .isInstanceOf(LpNotFoundException.class);
 
-            verify(lpRepository, never()).save(any());
+            then(lpRepository).should(never()).save(any());
         }
 
         @Test
+        @DisplayName("No comprueba colisión cuando el nombre no cambia")
         void noCompruebaColisionCuandoNombreNoCambia() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
@@ -215,20 +233,21 @@ public class LpServiceTest {
             lp.setArtist(artist);
             LpUpdateRequest request = new LpUpdateRequest("Mismo nombre", "description nueva");
 
-            when(lpRepository.findByIdWithArtist(1L))
-                    .thenReturn(Optional.of(lp));
-            when(lpRepository.save(any(Lp.class)))
-                    .thenReturn(lp);
+            given(lpRepository.findByIdWithArtist(1L))
+                    .willReturn(Optional.of(lp));
+            given(lpRepository.save(any(Lp.class)))
+                    .willReturn(lp);
 
             // ---------- ACT ----------
             LpResponse response = lpService.update(1L, request);
 
             // ---------- ASSERT ----------
-            verify(lpRepository, never()).findByArtistIdAndName(any(), any());
+            then(lpRepository).should(never()).findByArtistIdAndName(any(), any());
             assertThat(response.description()).isEqualTo("description nueva");
         }
 
         @Test
+        @DisplayName("Lanza LpAlreadyExistsForArtistException cuando el nombre cambia y colisiona")
         void lanzaLpAlreadyExistsForArtistExceptionCuandoNombreCambiaYColisiona() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
@@ -237,19 +256,20 @@ public class LpServiceTest {
             Lp lpColision = new Lp("Nuevo nombre", "otra description");
             LpUpdateRequest request = new LpUpdateRequest("Nuevo nombre", "description");
 
-            when(lpRepository.findByIdWithArtist(1L))
-                    .thenReturn(Optional.of(lp));
-            when(lpRepository.findByArtistIdAndName(any(), eq("Nuevo nombre")))
-                    .thenReturn(Optional.of(lpColision));
+            given(lpRepository.findByIdWithArtist(1L))
+                    .willReturn(Optional.of(lp));
+            given(lpRepository.findByArtistIdAndName(any(), eq("Nuevo nombre")))
+                    .willReturn(Optional.of(lpColision));
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.update(1L, request))
                     .isInstanceOf(LpAlreadyExistsForArtistException.class);
 
-            verify(lpRepository, never()).save(any());
+            then(lpRepository).should(never()).save(any());
         }
 
         @Test
+        @DisplayName("Persiste el cambio cuando no hay colisión")
         void persisteCambioCuandoNoHayColision() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
@@ -257,55 +277,58 @@ public class LpServiceTest {
             lp.setArtist(artist);
             LpUpdateRequest request = new LpUpdateRequest("Nuevo nombre", "description nueva");
 
-            when(lpRepository.findByIdWithArtist(1L))
-                    .thenReturn(Optional.of(lp));
-            when(lpRepository.findByArtistIdAndName(any(), eq("Nuevo nombre")))
-                    .thenReturn(Optional.empty());
-            when(lpRepository.save(any(Lp.class)))
-                    .thenReturn(lp);
+            given(lpRepository.findByIdWithArtist(1L))
+                    .willReturn(Optional.of(lp));
+            given(lpRepository.findByArtistIdAndName(any(), eq("Nuevo nombre")))
+                    .willReturn(Optional.empty());
+            given(lpRepository.save(any(Lp.class)))
+                    .willReturn(lp);
 
             // ---------- ACT ----------
             LpResponse response = lpService.update(1L, request);
 
             // ---------- ASSERT ----------
             ArgumentCaptor<Lp> captor = ArgumentCaptor.forClass(Lp.class);
-            verify(lpRepository).save(captor.capture());
+            then(lpRepository).should().save(captor.capture());
             assertThat(captor.getValue().getName()).isEqualTo("Nuevo nombre");
             assertThat(response.name()).isEqualTo("Nuevo nombre");
         }
     }
 
     @Nested
+    @DisplayName("delete(Long id)")
     class Delete {
 
         @Test
+        @DisplayName("Lanza LpNotFoundException cuando el id no existe")
         void lanzaLpNotFoundExceptionCuandoIdNoExiste() {
             // ---------- ARRANGE ----------
-            when(lpRepository.findByIdWithArtist(99L))
-                    .thenReturn(Optional.empty());
+            given(lpRepository.findByIdWithArtist(99L))
+                    .willReturn(Optional.empty());
 
             // ---------- ACT + ASSERT ----------
             assertThatThrownBy(() -> lpService.delete(99L))
                     .isInstanceOf(LpNotFoundException.class);
 
-            verify(lpRepository, never()).delete(any());
+            then(lpRepository).should(never()).delete(any());
         }
 
         @Test
+        @DisplayName("Persiste el borrado cuando el LP existe")
         void persisteBorradoCuandoLpExiste() {
             // ---------- ARRANGE ----------
             Artist artist = new Artist("Test Band", "description");
             Lp lp = new Lp("Test Lp", "description");
             lp.setArtist(artist);
 
-            when(lpRepository.findByIdWithArtist(1L))
-                    .thenReturn(Optional.of(lp));
+            given(lpRepository.findByIdWithArtist(1L))
+                    .willReturn(Optional.of(lp));
 
             // ---------- ACT ----------
             lpService.delete(1L);
 
             // ---------- ASSERT ----------
-            verify(lpRepository).delete(lp);
+            then(lpRepository).should().delete(lp);
         }
     }
 }

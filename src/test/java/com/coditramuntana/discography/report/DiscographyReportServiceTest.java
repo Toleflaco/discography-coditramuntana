@@ -6,6 +6,7 @@ import com.coditramuntana.discography.lp.Lp;
 import com.coditramuntana.discography.lp.LpRepository;
 import com.coditramuntana.discography.report.dto.DiscographyReportRow;
 import com.coditramuntana.discography.song.Song;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,8 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class DiscographyReportServiceTest {
@@ -35,6 +36,7 @@ class DiscographyReportServiceTest {
     private DiscographyReportService service;
 
     @Test
+    @DisplayName("Deduplica autores dentro del mismo LP")
     void deduplicaAutoresDentroDelMismoLp() {
         //---ARRANGE---//
         // 1. Construir Artist + LP + relación bidireccional
@@ -59,8 +61,8 @@ class DiscographyReportServiceTest {
         song3.addAuthor(bob);
 
         // 4. Programar el mock del repository: cuando el service llame findAllForReport(cualquier Pageable), devuelve un Lp construido
-        when(lpRepository.findAllForReport(any()))
-                .thenReturn(new PageImpl<>(List.of(lp)));
+        given(lpRepository.findAllForReport(any()))
+                .willReturn(new PageImpl<>(List.of(lp)));
 
 
         //----- ACT -------
@@ -80,11 +82,12 @@ class DiscographyReportServiceTest {
     }
 
     @Test
+    @DisplayName("Aplica el sort por defecto cuando el pageable llega sin sort")
     void aplicaSortPorDefectoCuandoPageableLlegaSinSort() {
         // ---------- ARRANGE ----------
 
-        when(lpRepository.findAllForReport(any()))
-                .thenReturn(new PageImpl<>(List.of()));
+        given(lpRepository.findAllForReport(any()))
+                .willReturn(new PageImpl<>(List.of()));
 
         // Pageable SIN sort (el cliente no mandó ?sort=)
         Pageable pageableSinSort = PageRequest.of(0, 10);
@@ -96,7 +99,7 @@ class DiscographyReportServiceTest {
 
         // Capturamos el Pageable que el service pasó al repository
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(lpRepository).findAllForReport(captor.capture());
+        then(lpRepository).should().findAllForReport(captor.capture());
 
         // Sacamos el Pageable capturado y verificamos su sort
         Sort sortAplicado = captor.getValue().getSort();
@@ -105,13 +108,14 @@ class DiscographyReportServiceTest {
     }
 
     @Test
+    @DisplayName("Respeta el sort del cliente cuando el pageable llega con sort")
     void respetaSortDelClienteCuandoPageableLlegaConSort() {
         // ---------- ARRANGE ----------
         // Creo un pageable con una ordenación de ejemplo Sort.by("name").descending())
         Pageable pageableConSort = PageRequest.of(0, 10, Sort.by("name").descending());
 
-        when(lpRepository.findAllForReport(any()))
-                .thenReturn(new PageImpl<>(List.of()));
+        given(lpRepository.findAllForReport(any()))
+                .willReturn(new PageImpl<>(List.of()));
 
         // --------- ACT ----------
         service.generateReport(pageableConSort);
@@ -120,13 +124,14 @@ class DiscographyReportServiceTest {
         // Comprobar que se ha enviado ese pageableConSort
 
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(lpRepository).findAllForReport(captor.capture());
+        then(lpRepository).should().findAllForReport(captor.capture());
         Sort sortAplicado = captor.getValue().getSort();
 
         assertThat(sortAplicado).isEqualTo(Sort.by("name").descending());
     }
 
     @Test
+    @DisplayName("Comprueba el orden alfabético de los autores")
     void compruebaSortOrdenAlfabeticoAutores() {
 
         // ---------- ARRANGE ----------
@@ -149,8 +154,8 @@ class DiscographyReportServiceTest {
         song1.addAuthor(marco);
 
         // 4. Programar el mock del repository: cuando el service llame findAllForReport(cualquier Pageable), devuelve un Lp construido
-        when(lpRepository.findAllForReport(any()))
-                .thenReturn(new PageImpl<>(List.of(lp)));
+        given(lpRepository.findAllForReport(any()))
+                .willReturn(new PageImpl<>(List.of(lp)));
 
         // --------- ACT ----------
         // Cualquier pageable vale, el mock ignora su valor por el any()
