@@ -38,7 +38,12 @@ public class LpController {
         this.lpService = lpService;
     }
 
-    @Operation(summary = "Lista paginada de Lps ordenada por nombre por defecto")
+    @Operation(
+            summary = "Lista paginada de LPs",
+            description = "Devuelve LPs con paginación. Por defecto ordenados por " +
+                    "nombre del artista y luego por nombre del LP. Filtro opcional " +
+                    "por nombre parcial del artista (case-insensitive)."
+    )
     @GetMapping
     public Page<LpResponse> findAll(
             @RequestParam(required = false) String artistName,
@@ -47,12 +52,35 @@ public class LpController {
         return lpService.findAll(artistName, pageable);
     }
 
+
+    @Operation(
+            summary = "Muestra el detalle de un Lp",
+            description = "Devuelve el detalle de un Lp buscado por su id"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "LP encontrado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LpDetailResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "El LP referenciado por id no existe",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            )
+    })
     @GetMapping("/{id}")
     public LpDetailResponse findById(@PathVariable Long id) {
         return lpService.findDetailById(id);
     }
 
-    @PostMapping
+
     @Operation(
             summary = "Crear un nuevo LP",
             description = "Crea un LP asociado a un Artist existente. " +
@@ -69,7 +97,7 @@ public class LpController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Body inválido (fallos de validación en name, description o artistId)",
+                    description = "Body inválido (fallos de validación en name, description)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ProblemDetail.class)
@@ -92,6 +120,7 @@ public class LpController {
                     )
             )
     })
+    @PostMapping
     public ResponseEntity<LpResponse> create(@Valid @RequestBody LpCreateRequest request) {
         LpResponse created = lpService.create(request);
 
@@ -105,11 +134,71 @@ public class LpController {
         return ResponseEntity.created(location).body(created);
     }
 
+
+    @Operation(
+            summary = "Actualiza un LP",
+            description = "Actualiza un LP asociado a un Artist existente. "
+
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "LP actualizado correctamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LpResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Body inválido (fallos de validación en name, description)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "El Lp referenciado por Id no existe",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Ya existe un LP con ese name para el mismo artistId",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            )
+    })
     @PutMapping("/{id}")
     public LpResponse update(@PathVariable Long id, @Valid @RequestBody LpUpdateRequest request) {
         return lpService.update(id, request);
     }
 
+
+    @Operation(
+            summary = "Borra un LP",
+            description = "Borra un Lp asociado a un Id "
+
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "LP borrado correctamente"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "El Lp referenciado por Id no existe",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            )
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         lpService.delete(id);
