@@ -4,6 +4,7 @@ import com.coditramuntana.discography.artist.dto.ArtistCreateRequest;
 import com.coditramuntana.discography.artist.dto.ArtistDetailResponse;
 import com.coditramuntana.discography.artist.dto.ArtistResponse;
 import com.coditramuntana.discography.artist.dto.ArtistUpdateRequest;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,8 @@ public class ArtistController {
         this.artistService = artistService;
     }
 
+
+    @Operation(summary = "Lista paginada de artistas ordenada por nombre por defecto")
     @GetMapping
     public Page<ArtistResponse> findAll(Pageable pageable) {
         return artistService.findAll(pageable);

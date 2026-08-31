@@ -20,6 +20,7 @@ public class ReportController {
         this.discographyReportService = discographyReportService;
     }
 
+    
     @GetMapping("/discography")
     public Page<DiscographyReportRow> generateReport(Pageable pageable){
         return discographyReportService.generateReport(pageable);

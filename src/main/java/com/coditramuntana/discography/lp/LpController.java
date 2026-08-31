@@ -4,9 +4,15 @@ import com.coditramuntana.discography.lp.dto.LpCreateRequest;
 import com.coditramuntana.discography.lp.dto.LpDetailResponse;
 import com.coditramuntana.discography.lp.dto.LpResponse;
 import com.coditramuntana.discography.lp.dto.LpUpdateRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +38,7 @@ public class LpController {
         this.lpService = lpService;
     }
 
+    @Operation(summary = "Lista paginada de Lps ordenada por nombre por defecto")
     @GetMapping
     public Page<LpResponse> findAll(
             @RequestParam(required = false) String artistName,
@@ -46,6 +53,45 @@ public class LpController {
     }
 
     @PostMapping
+    @Operation(
+            summary = "Crear un nuevo LP",
+            description = "Crea un LP asociado a un Artist existente. " +
+                    "El par (artistId, name) debe ser único."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "LP creado correctamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LpResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Body inválido (fallos de validación en name, description o artistId)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "El Artist referenciado por artistId no existe",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Ya existe un LP con ese name para el mismo artistId",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            )
+    })
     public ResponseEntity<LpResponse> create(@Valid @RequestBody LpCreateRequest request) {
         LpResponse created = lpService.create(request);
 
