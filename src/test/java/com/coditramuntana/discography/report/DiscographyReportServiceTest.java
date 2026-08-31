@@ -83,8 +83,6 @@ class DiscographyReportServiceTest {
     void aplicaSortPorDefectoCuandoPageableLlegaSinSort() {
         // ---------- ARRANGE ----------
 
-        // Mock devuelve una página vacía — no nos importa el contenido,
-        // solo queremos ver qué Pageable recibió el repository
         when(lpRepository.findAllForReport(any()))
                 .thenReturn(new PageImpl<>(List.of()));
 
