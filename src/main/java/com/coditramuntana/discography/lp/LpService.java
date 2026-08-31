@@ -11,7 +11,9 @@ import com.coditramuntana.discography.lp.exception.LpAlreadyExistsForArtistExcep
 import com.coditramuntana.discography.lp.exception.LpNotFoundException;
 import com.coditramuntana.discography.song.SongRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +32,14 @@ public class LpService {
     }
 
     public Page<LpResponse> findAll(String artistName, Pageable pageable) {
+        Pageable effective = pageable.getSort().isUnsorted()
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by("artist.name", "name"))
+                : pageable;
+
         Page<Lp> lps = (artistName == null || artistName.isEmpty())
-                ? lpRepository.findAllWithArtist(pageable)
-                : lpRepository.findAllByArtistNameWithArtist(artistName, pageable);
+                ? lpRepository.findAllWithArtist(effective)
+                : lpRepository.findAllByArtistNameWithArtist(artistName, effective);
         return lps.map(LpResponse::from);
     }
 

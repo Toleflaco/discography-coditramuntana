@@ -5,7 +5,9 @@ import com.coditramuntana.discography.lp.Lp;
 import com.coditramuntana.discography.lp.LpRepository;
 import com.coditramuntana.discography.report.dto.DiscographyReportRow;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +25,13 @@ public class DiscographyReportService {
     }
 
     public Page<DiscographyReportRow> generateReport(Pageable pageable) {
-        return lpRepository.findAllForReport(pageable)
+
+        Pageable effective = pageable.getSort().isUnsorted()
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by("artist.name", "name"))
+                : pageable;
+
+        return lpRepository.findAllForReport(effective)
                 .map(lp-> {
                     long songCount = lp.getSongs().size();
                     String authorsCsv = lp.getSongs().stream()

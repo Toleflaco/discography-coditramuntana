@@ -9,7 +9,9 @@ import com.coditramuntana.discography.artist.exception.ArtistNameAlreadyExistsEx
 import com.coditramuntana.discography.artist.exception.ArtistNotFoundException;
 import com.coditramuntana.discography.lp.LpRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,11 @@ public class ArtistService {
     }
 
     public Page<ArtistResponse> findAll(Pageable pageable) {
-        return artistRepository.findAll(pageable).map(ArtistResponse::from);
+        Pageable effective = pageable.getSort().isUnsorted()
+                ? PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(), Sort.by("name"))
+                : pageable;
+
+        return artistRepository.findAll(effective).map(ArtistResponse::from);
     }
 
     public Artist findById(Long id) {
