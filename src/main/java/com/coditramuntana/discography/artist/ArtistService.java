@@ -27,12 +27,16 @@ public class ArtistService {
         this.lpRepository = lpRepository;
     }
 
-    public Page<ArtistResponse> findAll(Pageable pageable) {
+    public Page<ArtistResponse> findAll(String name, Pageable pageable) {
         Pageable effective = pageable.getSort().isUnsorted()
                 ? PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(), Sort.by("name"))
                 : pageable;
 
-        return artistRepository.findAll(effective).map(ArtistResponse::from);
+        String normalizedName = name == null ? null : name.strip();
+        Page<Artist> artists = normalizedName == null || normalizedName.isEmpty()
+                ? artistRepository.findAll(effective)
+                : artistRepository.findByNameContainingIgnoreCase(normalizedName, effective);
+        return artists.map(ArtistResponse::from);
     }
 
     public Artist findById(Long id) {

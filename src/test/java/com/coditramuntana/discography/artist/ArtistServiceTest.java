@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -242,11 +243,11 @@ public class ArtistServiceTest {
     }
 
     @Nested
-    @DisplayName("findAll(Pageable pageable)")
+    @DisplayName("findAll(String name, Pageable pageable)")
     class FindAll {
         @Test
-        @DisplayName("Aplica el sort por defecto cuando el pageable llega sin sort")
-        void aplicaSortPorDefectoCuandoPageableLlegaSinSort() {
+        @DisplayName("Aplica el sort por defecto y no filtra cuando name es nulo")
+        void aplicaSortPorDefectoYNoFiltraCuandoNameEsNulo() {
             // ---------- ARRANGE ----------
 
             given(artistRepository.findAll(any(Pageable.class)))
@@ -257,19 +258,62 @@ public class ArtistServiceTest {
 
             // --------- ACT ----------
 
-            artistService.findAll(pageableSinSort);
+            artistService.findAll(null, pageableSinSort);
             // ---------- ASSERT ----------
 
             // Capturamos el Pageable que el service pasó al repository
             ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
             then(artistRepository).should().findAll(captor.capture());
+            then(artistRepository).should(never()).findByNameContainingIgnoreCase(any(), any());
 
             // Sacamos el Pageable capturado y verificamos su sort
             Sort sortAplicado = captor.getValue().getSort();
 
             assertThat(sortAplicado).isEqualTo(Sort.by("name"));
         }
+
+        @Test
+        @DisplayName("No filtra cuando name solo contiene espacios")
+        void noFiltraCuandoNameSoloContieneEspacios() {
+            given(artistRepository.findAll(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of()));
+
+            artistService.findAll("   ", PageRequest.of(0, 10));
+
+            then(artistRepository).should().findAll(any(Pageable.class));
+            then(artistRepository).should(never()).findByNameContainingIgnoreCase(any(), any());
+        }
+
+        @Test
+        @DisplayName("Filtra por nombre parcial ignorando mayúsculas y minúsculas")
+        void filtraPorNombreParcialIgnorandoMayusculasYMinusculas() {
+            Artist artist = new Artist("Metallica", "description");
+            given(artistRepository.findByNameContainingIgnoreCase(
+                    "tAl", PageRequest.of(0, 10, Sort.by("name"))
+            )).willReturn(new PageImpl<>(List.of(artist)));
+
+            Page<ArtistResponse> result = artistService.findAll("tAl", PageRequest.of(0, 10));
+
+            then(artistRepository).should().findByNameContainingIgnoreCase(
+                    "tAl", PageRequest.of(0, 10, Sort.by("name"))
+            );
+            then(artistRepository).should(never()).findAll(any(Pageable.class));
+            assertThat(result.getContent()).extracting(ArtistResponse::name).containsExactly("Metallica");
+        }
+
+        @Test
+        @DisplayName("Elimina espacios exteriores del filtro y conserva los interiores")
+        void eliminaEspaciosExterioresYConservaEspaciosInteriores() {
+            String normalizedName = "Mixed Case";
+            given(artistRepository.findByNameContainingIgnoreCase(
+                    normalizedName, PageRequest.of(0, 10, Sort.by("name"))
+            )).willReturn(new PageImpl<>(List.of()));
+
+            artistService.findAll("  Mixed Case  ", PageRequest.of(0, 10));
+
+            then(artistRepository).should().findByNameContainingIgnoreCase(
+                    normalizedName, PageRequest.of(0, 10, Sort.by("name"))
+            );
+        }
     }
 }
-
-

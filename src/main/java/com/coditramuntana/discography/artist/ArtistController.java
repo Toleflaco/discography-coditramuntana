@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -39,12 +40,15 @@ public class ArtistController {
 
     @Operation(
             summary = "Lista paginada de Artistas",
-            description = "Devuelve Artists con paginación. Por defecto ordenados por " +
-                    "nombre del artista "
+            description = "Devuelve Artists con paginación y filtro opcional por texto parcial " +
+                    "del nombre, sin distinguir mayúsculas y minúsculas. Por defecto se ordenan por nombre."
     )
     @GetMapping
-    public Page<ArtistResponse> findAll(Pageable pageable) {
-        return artistService.findAll(pageable);
+    public Page<ArtistResponse> findAll(
+            @RequestParam(required = false) String name,
+            Pageable pageable
+    ) {
+        return artistService.findAll(name, pageable);
 
     }
 

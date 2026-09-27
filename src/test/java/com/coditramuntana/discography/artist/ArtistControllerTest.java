@@ -12,9 +12,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
@@ -32,6 +37,42 @@ class ArtistControllerTest {
 
     @MockitoBean
     private ArtistService artistService;
+
+    @Nested
+    @DisplayName("GET /api/artists")
+    class FindAll {
+
+        @Test
+        @DisplayName("Acepta el filtro name y devuelve la página de artistas")
+        void aceptaFiltroNameYDevuelvePaginaDeArtistas() throws Exception {
+            ArtistResponse artist = new ArtistResponse(1L, "Metallica", "description");
+            Page<ArtistResponse> response = new PageImpl<>(
+                    List.of(artist), PageRequest.of(0, 10), 1
+            );
+            given(artistService.findAll("tAl", PageRequest.of(0, 10)))
+                    .willReturn(response);
+
+            mockMvc.perform(get("/api/artists")
+                            .param("name", "tAl")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].name").value("Metallica"));
+        }
+
+        @Test
+        @DisplayName("Permite listar sin el parámetro name")
+        void permiteListarSinParametroName() throws Exception {
+            given(artistService.findAll(null, PageRequest.of(0, 20)))
+                    .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+            mockMvc.perform(get("/api/artists")
+                            .param("page", "0")
+                            .param("size", "20"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isEmpty());
+        }
+    }
 
     @Nested
     @DisplayName("GET /api/artists/{id}")
@@ -137,4 +178,3 @@ class ArtistControllerTest {
         }
     }
 }
-
