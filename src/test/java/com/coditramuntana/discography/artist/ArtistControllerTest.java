@@ -49,7 +49,7 @@ class ArtistControllerTest {
             Page<ArtistResponse> response = new PageImpl<>(
                     List.of(artist), PageRequest.of(0, 10), 1
             );
-            given(artistService.findAll("tAl", PageRequest.of(0, 10)))
+            given(artistService.findAll("tAl", null, PageRequest.of(0, 10)))
                     .willReturn(response);
 
             mockMvc.perform(get("/api/artists")
@@ -61,9 +61,42 @@ class ArtistControllerTest {
         }
 
         @Test
+        @DisplayName("Acepta el filtro description")
+        void aceptaFiltroDescription() throws Exception {
+            Page<ArtistResponse> response = new PageImpl<>(
+                    List.of(new ArtistResponse(1L, "Metallica", "Thrash metal band")),
+                    PageRequest.of(0, 10), 1
+            );
+            given(artistService.findAll(null, "metal", PageRequest.of(0, 10)))
+                    .willReturn(response);
+
+            mockMvc.perform(get("/api/artists")
+                            .param("description", "metal")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].description").value("Thrash metal band"));
+        }
+
+        @Test
+        @DisplayName("Acepta simultáneamente los filtros name y description")
+        void aceptaAmbosFiltros() throws Exception {
+            given(artistService.findAll("tal", "metal", PageRequest.of(0, 10)))
+                    .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+            mockMvc.perform(get("/api/artists")
+                            .param("name", "tal")
+                            .param("description", "metal")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isEmpty());
+        }
+
+        @Test
         @DisplayName("Permite listar sin el parámetro name")
         void permiteListarSinParametroName() throws Exception {
-            given(artistService.findAll(null, PageRequest.of(0, 20)))
+            given(artistService.findAll(null, null, PageRequest.of(0, 20)))
                     .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
             mockMvc.perform(get("/api/artists")

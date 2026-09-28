@@ -40,15 +40,17 @@ public class ArtistController {
 
     @Operation(
             summary = "Lista paginada de Artistas",
-            description = "Devuelve Artists con paginación y filtro opcional por texto parcial " +
-                    "del nombre, sin distinguir mayúsculas y minúsculas. Por defecto se ordenan por nombre."
+            description = "Devuelve Artists con paginación y filtros opcionales por texto parcial " +
+                    "del nombre y de la descripción, sin distinguir mayúsculas y minúsculas. " +
+                    "Si se envían ambos filtros, deben coincidir los dos. Por defecto se ordenan por nombre."
     )
     @GetMapping
     public Page<ArtistResponse> findAll(
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) String description,
             Pageable pageable
     ) {
-        return artistService.findAll(name, pageable);
+        return artistService.findAll(name, description, pageable);
 
     }
 

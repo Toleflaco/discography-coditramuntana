@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 
@@ -25,7 +24,7 @@ public class Artist {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Lob
+    @Column(length = 5000)
     private String description;
     @OneToMany(mappedBy = "artist", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Lp> lps = new ArrayList<>();
