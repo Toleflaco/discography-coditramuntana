@@ -243,11 +243,11 @@ public class ArtistServiceTest {
     }
 
     @Nested
-    @DisplayName("findAll(String name, Pageable pageable)")
+    @DisplayName("findAll(String name, String description, Pageable pageable)")
     class FindAll {
         @Test
-        @DisplayName("Aplica el sort por defecto y no filtra cuando name es nulo")
-        void aplicaSortPorDefectoYNoFiltraCuandoNameEsNulo() {
+        @DisplayName("Aplica el sort por defecto y no filtra cuando ambos filtros son nulos")
+        void aplicaSortPorDefectoYNoFiltraCuandoAmbosFiltrosSonNulos() {
             // ---------- ARRANGE ----------
 
             given(artistRepository.findAll(any(Pageable.class)))
@@ -258,13 +258,14 @@ public class ArtistServiceTest {
 
             // --------- ACT ----------
 
-            artistService.findAll(null, pageableSinSort);
+            artistService.findAll(null, null, pageableSinSort);
             // ---------- ASSERT ----------
 
             // Capturamos el Pageable que el service pasó al repository
             ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
             then(artistRepository).should().findAll(captor.capture());
             then(artistRepository).should(never()).findByNameContainingIgnoreCase(any(), any());
+            then(artistRepository).should(never()).findByDescriptionContainingIgnoreCase(any(), any());
 
             // Sacamos el Pageable capturado y verificamos su sort
             Sort sortAplicado = captor.getValue().getSort();
@@ -273,15 +274,16 @@ public class ArtistServiceTest {
         }
 
         @Test
-        @DisplayName("No filtra cuando name solo contiene espacios")
-        void noFiltraCuandoNameSoloContieneEspacios() {
+        @DisplayName("No filtra cuando ambos filtros solo contienen espacios")
+        void noFiltraCuandoAmbosFiltrosSoloContienenEspacios() {
             given(artistRepository.findAll(any(Pageable.class)))
                     .willReturn(new PageImpl<>(List.of()));
 
-            artistService.findAll("   ", PageRequest.of(0, 10));
+            artistService.findAll("   ", "  ", PageRequest.of(0, 10));
 
             then(artistRepository).should().findAll(any(Pageable.class));
             then(artistRepository).should(never()).findByNameContainingIgnoreCase(any(), any());
+            then(artistRepository).should(never()).findByDescriptionContainingIgnoreCase(any(), any());
         }
 
         @Test
@@ -292,7 +294,7 @@ public class ArtistServiceTest {
                     "tAl", PageRequest.of(0, 10, Sort.by("name"))
             )).willReturn(new PageImpl<>(List.of(artist)));
 
-            Page<ArtistResponse> result = artistService.findAll("tAl", PageRequest.of(0, 10));
+            Page<ArtistResponse> result = artistService.findAll("tAl", null, PageRequest.of(0, 10));
 
             then(artistRepository).should().findByNameContainingIgnoreCase(
                     "tAl", PageRequest.of(0, 10, Sort.by("name"))
@@ -305,15 +307,58 @@ public class ArtistServiceTest {
         @DisplayName("Elimina espacios exteriores del filtro y conserva los interiores")
         void eliminaEspaciosExterioresYConservaEspaciosInteriores() {
             String normalizedName = "Mixed Case";
+            String normalizedDescription = "Heavy Metal";
             given(artistRepository.findByNameContainingIgnoreCase(
                     normalizedName, PageRequest.of(0, 10, Sort.by("name"))
             )).willReturn(new PageImpl<>(List.of()));
+            given(artistRepository.findByDescriptionContainingIgnoreCase(
+                    normalizedDescription, PageRequest.of(0, 10, Sort.by("name"))
+            )).willReturn(new PageImpl<>(List.of()));
 
-            artistService.findAll("  Mixed Case  ", PageRequest.of(0, 10));
+            artistService.findAll("  Mixed Case  ", null, PageRequest.of(0, 10));
+            artistService.findAll(null, "  Heavy Metal  ", PageRequest.of(0, 10));
 
             then(artistRepository).should().findByNameContainingIgnoreCase(
                     normalizedName, PageRequest.of(0, 10, Sort.by("name"))
             );
+            then(artistRepository).should().findByDescriptionContainingIgnoreCase(
+                    normalizedDescription, PageRequest.of(0, 10, Sort.by("name"))
+            );
+        }
+
+        @Test
+        @DisplayName("Filtra por descripción parcial ignorando mayúsculas y minúsculas")
+        void filtraPorDescripcionParcial() {
+            Artist artist = new Artist("Metallica", "Thrash metal band");
+            given(artistRepository.findByDescriptionContainingIgnoreCase(
+                    "mEtAl", PageRequest.of(0, 10, Sort.by("name"))
+            )).willReturn(new PageImpl<>(List.of(artist)));
+
+            Page<ArtistResponse> result = artistService.findAll(null, "mEtAl", PageRequest.of(0, 10));
+
+            then(artistRepository).should().findByDescriptionContainingIgnoreCase(
+                    "mEtAl", PageRequest.of(0, 10, Sort.by("name"))
+            );
+            then(artistRepository).should(never()).findAll(any(Pageable.class));
+            assertThat(result.getContent()).extracting(ArtistResponse::name).containsExactly("Metallica");
+        }
+
+        @Test
+        @DisplayName("Combina name y description con AND y normaliza ambos filtros")
+        void combinaAmbosFiltrosConAnd() {
+            String normalizedName = "Metal";
+            String normalizedDescription = "Thrash";
+            given(artistRepository.findByNameContainingIgnoreCaseAndDescriptionContainingIgnoreCase(
+                    normalizedName, normalizedDescription, PageRequest.of(0, 10, Sort.by("name"))
+            )).willReturn(new PageImpl<>(List.of()));
+
+            artistService.findAll("  Metal  ", "  Thrash  ", PageRequest.of(0, 10));
+
+            then(artistRepository).should().findByNameContainingIgnoreCaseAndDescriptionContainingIgnoreCase(
+                    normalizedName, normalizedDescription, PageRequest.of(0, 10, Sort.by("name"))
+            );
+            then(artistRepository).should(never()).findByNameContainingIgnoreCase(any(), any());
+            then(artistRepository).should(never()).findByDescriptionContainingIgnoreCase(any(), any());
         }
     }
 }

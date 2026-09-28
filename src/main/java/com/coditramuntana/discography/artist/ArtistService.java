@@ -27,15 +27,28 @@ public class ArtistService {
         this.lpRepository = lpRepository;
     }
 
-    public Page<ArtistResponse> findAll(String name, Pageable pageable) {
+    public Page<ArtistResponse> findAll(String name, String description, Pageable pageable) {
         Pageable effective = pageable.getSort().isUnsorted()
                 ? PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(), Sort.by("name"))
                 : pageable;
 
         String normalizedName = name == null ? null : name.strip();
-        Page<Artist> artists = normalizedName == null || normalizedName.isEmpty()
-                ? artistRepository.findAll(effective)
-                : artistRepository.findByNameContainingIgnoreCase(normalizedName, effective);
+        String normalizedDescription = description == null ? null : description.strip();
+        boolean hasNameFilter = normalizedName != null && !normalizedName.isEmpty();
+        boolean hasDescriptionFilter = normalizedDescription != null && !normalizedDescription.isEmpty();
+
+        Page<Artist> artists;
+        if (hasNameFilter && hasDescriptionFilter) {
+            artists = artistRepository.findByNameContainingIgnoreCaseAndDescriptionContainingIgnoreCase(
+                    normalizedName, normalizedDescription, effective
+            );
+        } else if (hasNameFilter) {
+            artists = artistRepository.findByNameContainingIgnoreCase(normalizedName, effective);
+        } else if (hasDescriptionFilter) {
+            artists = artistRepository.findByDescriptionContainingIgnoreCase(normalizedDescription, effective);
+        } else {
+            artists = artistRepository.findAll(effective);
+        }
         return artists.map(ArtistResponse::from);
     }
 

@@ -30,4 +30,35 @@ class ArtistRepositoryTest {
         assertThat(artists.getContent()).hasSize(1);
         assertThat(artists.getContent().getFirst().getName()).isEqualTo("Another Mixed Case Band");
     }
+
+    @Test
+    void buscaDescripcionParcialSinDistinguirMayusculasYMinusculas() {
+        artistRepository.save(new Artist("Metallica", "Thrash METAL band"));
+        artistRepository.save(new Artist("Iron Maiden", "Heavy metal band"));
+        artistRepository.save(new Artist("Unrelated Artist", "Rock band"));
+        artistRepository.flush();
+
+        Page<Artist> artists = artistRepository.findByDescriptionContainingIgnoreCase(
+                "mEtAl", PageRequest.of(0, 10, Sort.by("name"))
+        );
+
+        assertThat(artists.getTotalElements()).isEqualTo(2);
+        assertThat(artists.getContent()).extracting(Artist::getName)
+                .containsExactly("Iron Maiden", "Metallica");
+    }
+
+    @Test
+    void combinaNombreYDescripcionConAnd() {
+        artistRepository.save(new Artist("Metallica", "Thrash metal"));
+        artistRepository.save(new Artist("Metallica Tribute", "Rock tribute band"));
+        artistRepository.save(new Artist("Iron Maiden", "Thrash metal"));
+        artistRepository.flush();
+
+        Page<Artist> artists = artistRepository.findByNameContainingIgnoreCaseAndDescriptionContainingIgnoreCase(
+                "metal", "THRASH", PageRequest.of(0, 10)
+        );
+
+        assertThat(artists.getTotalElements()).isEqualTo(1);
+        assertThat(artists.getContent()).extracting(Artist::getName).containsExactly("Metallica");
+    }
 }
